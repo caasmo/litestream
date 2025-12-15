@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/benbjohnson/litestream"
+
+	"github.com/benbjohnson/litestream/config"
+	"github.com/benbjohnson/litestream/setup"
 )
 
 // RestoreCommand represents a command to restore a database from a backup.
@@ -94,9 +97,9 @@ func (c *RestoreCommand) loadFromURL(ctx context.Context, replicaURL string, ifD
 	}
 
 	syncInterval := litestream.DefaultSyncInterval
-	r, err := NewReplicaFromConfig(&ReplicaConfig{
+	r, err := setup.NewReplicaFromConfig(&config.ReplicaConfig{
 		URL: replicaURL,
-		ReplicaSettings: ReplicaSettings{
+		ReplicaSettings: config.ReplicaSettings{
 			SyncInterval: &syncInterval,
 		},
 	}, nil)
@@ -110,20 +113,20 @@ func (c *RestoreCommand) loadFromURL(ctx context.Context, replicaURL string, ifD
 // loadFromConfig returns a replica & updates the restore options from a DB reference.
 func (c *RestoreCommand) loadFromConfig(_ context.Context, dbPath, configPath string, expandEnv, ifDBNotExists bool, opt *litestream.RestoreOptions) (*litestream.Replica, error) {
 	// Load configuration.
-	config, err := ReadConfigFile(configPath, expandEnv)
+	cfg, err := config.ReadConfigFile(configPath, expandEnv)
 	if err != nil {
 		return nil, err
 	}
 
 	// Lookup database from configuration file by path.
-	if dbPath, err = expand(dbPath); err != nil {
+	if dbPath, err = config.Expand(dbPath); err != nil {
 		return nil, err
 	}
-	dbConfig := config.DBConfig(dbPath)
+	dbConfig := cfg.DBConfig(dbPath)
 	if dbConfig == nil {
 		return nil, fmt.Errorf("database not found in config: %s", dbPath)
 	}
-	db, err := NewDBFromConfig(dbConfig)
+	db, err := setup.NewDBFromConfig(dbConfig)
 	if err != nil {
 		return nil, err
 	}

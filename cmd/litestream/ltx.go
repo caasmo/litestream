@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/litestream"
+	"github.com/benbjohnson/litestream/setup"
+	"github.com/benbjohnson/litestream/config"
 )
 
 // LTXCommand represents a command to list LTX files for a database.
@@ -32,32 +34,32 @@ func (c *LTXCommand) Run(ctx context.Context, args []string) (err error) {
 		if *configPath != "" {
 			return fmt.Errorf("cannot specify a replica URL and the -config flag")
 		}
-		if r, err = NewReplicaFromConfig(&ReplicaConfig{URL: fs.Arg(0)}, nil); err != nil {
+		if r, err = setup.NewReplicaFromConfig(&config.ReplicaConfig{URL: fs.Arg(0)}, nil); err != nil {
 			return err
 		}
 		initLog(os.Stdout, "INFO", "text")
 	} else {
 		if *configPath == "" {
-			*configPath = DefaultConfigPath()
+			*configPath = config.DefaultConfigPath()
 		}
 
 		// Load configuration.
-		config, err := ReadConfigFile(*configPath, !*noExpandEnv)
+		cfg, err := config.ReadConfigFile(*configPath, !*noExpandEnv)
 		if err != nil {
 			return err
 		}
 
 		// Lookup database from configuration file by path.
-		path, err := expand(fs.Arg(0))
+		path, err := config.Expand(fs.Arg(0))
 		if err != nil {
 			return err
 		}
-		dbc := config.DBConfig(path)
+		dbc := cfg.DBConfig(path)
 		if dbc == nil {
 			return fmt.Errorf("database not found in config: %s", path)
 		}
 
-		db, err := NewDBFromConfig(dbc)
+		db, err := setup.NewDBFromConfig(dbc)
 		if err != nil {
 			return err
 		} else if db.Replica == nil {

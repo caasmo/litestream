@@ -23,6 +23,8 @@ import (
 	"github.com/benbjohnson/litestream/oss"
 	"github.com/benbjohnson/litestream/s3"
 	"github.com/benbjohnson/litestream/sftp"
+	"github.com/benbjohnson/litestream/config"
+	"github.com/benbjohnson/litestream/setup"
 )
 
 // ReplicateCommand represents a command that continuously replicates SQLite databases.
@@ -30,7 +32,7 @@ type ReplicateCommand struct {
 	cmd    *exec.Cmd  // subcommand
 	execCh chan error // subcommand error channel
 
-	Config Config
+	Config config.Config
 
 	// MCP server
 	MCP *MCPServer
@@ -39,7 +41,7 @@ type ReplicateCommand struct {
 	Store *litestream.Store
 
 	// Directory monitors for dynamic database discovery.
-	directoryMonitors []*DirectoryMonitor
+	directoryMonitors []*setup.DirectoryMonitor
 }
 
 func NewReplicateCommand() *ReplicateCommand {
@@ -65,7 +67,7 @@ func (c *ReplicateCommand) ParseFlags(_ context.Context, args []string) (err err
 		if *configPath == "" {
 			*configPath = DefaultConfigPath()
 		}
-		if c.Config, err = ReadConfigFile(*configPath, !*noExpandEnv); err != nil {
+		if c.Config, err = config.ReadConfigFile(*configPath, !*noExpandEnv); err != nil {
 			return err
 		}
 
@@ -80,24 +82,24 @@ func (c *ReplicateCommand) ParseFlags(_ context.Context, args []string) (err err
 		}
 
 		// Initialize config with defaults when using command-line arguments
-		c.Config = DefaultConfig()
+		c.Config = config.DefaultConfig()
 		initLog(os.Stdout, "INFO", "text")
 
-		dbConfig := &DBConfig{Path: fs.Arg(0)}
+		dbConfig := &config.DBConfig{Path: fs.Arg(0)}
 		for _, u := range fs.Args()[1:] {
 			// Check if this looks like a flag that was placed after positional arguments
 			if strings.HasPrefix(u, "-") {
 				return fmt.Errorf("flag %q must be positioned before DB_PATH and REPLICA_URL arguments", u)
 			}
 			syncInterval := litestream.DefaultSyncInterval
-			dbConfig.Replicas = append(dbConfig.Replicas, &ReplicaConfig{
+			dbConfig.Replicas = append(dbConfig.Replicas, &config.ReplicaConfig{
 				URL: u,
-				ReplicaSettings: ReplicaSettings{
+				ReplicaSettings: config.ReplicaSettings{
 					SyncInterval: &syncInterval,
 				},
 			})
 		}
-		c.Config.DBs = []*DBConfig{dbConfig}
+		c.Config.DBs = []*config.DBConfig{dbConfig}
 	}
 
 	c.Config.ConfigPath = *configPath
@@ -131,13 +133,13 @@ func (c *ReplicateCommand) Run(ctx context.Context) (err error) {
 
 	var dbs []*litestream.DB
 	var watchables []struct {
-		config *DBConfig
+		config *config.DBConfig
 		dbs    []*litestream.DB
 	}
 	for _, dbConfig := range c.Config.DBs {
 		// Handle directory configuration
 		if dbConfig.Dir != "" {
-			dirDbs, err := NewDBsFromDirectoryConfig(dbConfig)
+			dirDbs, err := setup.NewDBsFromDirectoryConfig(dbConfig)
 			if err != nil {
 				return err
 			}
@@ -145,13 +147,13 @@ func (c *ReplicateCommand) Run(ctx context.Context) (err error) {
 			slog.Info("found databases in directory", "dir", dbConfig.Dir, "count", len(dirDbs), "watch", dbConfig.Watch)
 			if dbConfig.Watch {
 				watchables = append(watchables, struct {
-					config *DBConfig
+					config *config.DBConfig
 					dbs    []*litestream.DB
 				}{config: dbConfig, dbs: dirDbs})
 			}
 		} else {
 			// Handle single database configuration
-			db, err := NewDBFromConfig(dbConfig)
+			db, err := setup.NewDBFromConfig(dbConfig)
 			if err != nil {
 				return err
 			}
@@ -180,7 +182,7 @@ func (c *ReplicateCommand) Run(ctx context.Context) (err error) {
 	}
 
 	for _, entry := range watchables {
-		monitor, err := NewDirectoryMonitor(ctx, c.Store, entry.config, entry.dbs)
+		monitor, err := setup.NewDirectoryMonitor(ctx, c.Store, entry.config, entry.dbs)
 		if err != nil {
 			for _, m := range c.directoryMonitors {
 				m.Close()

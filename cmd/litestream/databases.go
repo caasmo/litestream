@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"github.com/benbjohnson/litestream/setup"
+	"github.com/benbjohnson/litestream/config"
 )
 
 // DatabasesCommand is a command for listing managed databases.
@@ -26,7 +28,7 @@ func (c *DatabasesCommand) Run(_ context.Context, args []string) (err error) {
 	if *configPath == "" {
 		*configPath = DefaultConfigPath()
 	}
-	config, err := ReadConfigFile(*configPath, !*noExpandEnv)
+	cfg, err := config.ReadConfigFile(*configPath, !*noExpandEnv)
 	if err != nil {
 		return err
 	}
@@ -36,8 +38,8 @@ func (c *DatabasesCommand) Run(_ context.Context, args []string) (err error) {
 	defer w.Flush()
 
 	fmt.Fprintln(w, "path\treplica")
-	for _, dbConfig := range config.DBs {
-		db, err := NewDBFromConfig(dbConfig)
+	for _, dbConfig := range cfg.DBs {
+		db, err := setup.NewDBFromConfig(dbConfig)
 		if err != nil {
 			return err
 		}

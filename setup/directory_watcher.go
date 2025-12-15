@@ -1,4 +1,4 @@
-package main
+package setup
 
 import (
 	"context"
@@ -12,13 +12,14 @@ import (
 	"github.com/fsnotify/fsnotify"
 
 	"github.com/benbjohnson/litestream"
+	"github.com/benbjohnson/litestream/config"
 )
 
 // DirectoryMonitor watches a directory tree for SQLite databases and dynamically
 // manages database instances within the store as files are created or removed.
 type DirectoryMonitor struct {
 	store     *litestream.Store
-	config    *DBConfig
+	config    *config.DBConfig
 	dirPath   string
 	pattern   string
 	recursive bool
@@ -37,7 +38,7 @@ type DirectoryMonitor struct {
 }
 
 // NewDirectoryMonitor returns a new monitor for directory-based replication.
-func NewDirectoryMonitor(ctx context.Context, store *litestream.Store, dbc *DBConfig, existing []*litestream.DB) (*DirectoryMonitor, error) {
+func NewDirectoryMonitor(ctx context.Context, store *litestream.Store, dbc *config.DBConfig, existing []*litestream.DB) (*DirectoryMonitor, error) {
 	if dbc == nil {
 		return nil, errors.New("database config required")
 	}
@@ -45,7 +46,7 @@ func NewDirectoryMonitor(ctx context.Context, store *litestream.Store, dbc *DBCo
 		return nil, errors.New("store required")
 	}
 
-	dirPath, err := expand(dbc.Dir)
+	dirPath, err := config.Expand(dbc.Dir)
 	if err != nil {
 		return nil, err
 	}
