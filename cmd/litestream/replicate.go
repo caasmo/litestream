@@ -71,6 +71,13 @@ func (c *ReplicateCommand) ParseFlags(_ context.Context, args []string) (err err
 			return err
 		}
 
+        // Configure logging.
+        logOutput := os.Stdout
+        if c.Config.Logging.Stderr {
+            logOutput = os.Stderr
+        }
+        initLog(logOutput, c.Config.Logging.Level, c.Config.Logging.Type)
+
 	case 1:
 		// Only database path provided, missing replica URL
 		return fmt.Errorf("must specify at least one replica URL for %s", fs.Arg(0))
