@@ -40,7 +40,7 @@ func (c *LTXCommand) Run(ctx context.Context, args []string) (err error) {
 		initLog(os.Stdout, "INFO", "text")
 	} else {
 		if *configPath == "" {
-			*configPath = config.DefaultConfigPath()
+			*configPath = DefaultConfigPath()
 		}
 
 		// Load configuration.
