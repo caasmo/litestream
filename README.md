@@ -1,3 +1,14 @@
+> **Note**
+> This is a fork of the original [benbjohnson/litestream](https://github.com/benbjohnson/litestream) repository. The goal of this fork is to refactor the project to be used as a library. See below for details.
+
+# Purpose of this Fork
+
+This fork moves configuration parsing, validation and setup of Db, replica, replicaclient and monitors struct to standard packages in order to use that code when using litestream as an API, instead of a binary.
+
+Only moving of code was performed, avoiding modification of code as much as possible.
+
+---
+
 Litestream
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/benbjohnson/litestream)
 ![Status](https://img.shields.io/badge/status-beta-blue)
