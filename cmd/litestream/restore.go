@@ -89,7 +89,7 @@ func (c *RestoreCommand) loadFromURL(ctx context.Context, replicaURL string, ifD
 		return nil, fmt.Errorf("output path required")
 	}
 
-	initLog(os.Stdout, "INFO", "text")
+	setup.InitLog(os.Stdout, "INFO", "text")
 
 	// Exit successfully if the output file already exists.
 	if _, err := os.Stat(opt.OutputPath); !os.IsNotExist(err) && ifDBNotExists {

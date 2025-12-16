@@ -76,7 +76,7 @@ func (c *ReplicateCommand) ParseFlags(_ context.Context, args []string) (err err
         if c.Config.Logging.Stderr {
             logOutput = os.Stderr
         }
-        initLog(logOutput, c.Config.Logging.Level, c.Config.Logging.Type)
+        setup.InitLog(logOutput, c.Config.Logging.Level, c.Config.Logging.Type)
 
 	case 1:
 		// Only database path provided, missing replica URL
@@ -90,7 +90,7 @@ func (c *ReplicateCommand) ParseFlags(_ context.Context, args []string) (err err
 
 		// Initialize config with defaults when using command-line arguments
 		c.Config = config.DefaultConfig()
-		initLog(os.Stdout, "INFO", "text")
+		setup.InitLog(os.Stdout, "INFO", "text")
 
 		dbConfig := &config.DBConfig{Path: fs.Arg(0)}
 		for _, u := range fs.Args()[1:] {
