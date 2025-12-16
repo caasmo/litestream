@@ -1,11 +1,12 @@
 > **Note**
-> This is a fork of the original [benbjohnson/litestream](https://github.com/benbjohnson/litestream) repository. The goal of this fork is to refactor the project to be used as a library. See below for details.
+> This is a fork of the original [benbjohnson/litestream](https://github.com/benbjohnson/litestream) repository. The primary goal of this fork is to improve Litestream's usability as a library by exposing its core configuration and setup logic. See below for details.
 
 # Purpose of this Fork
 
-This fork moves configuration parsing, validation and setup of Db, replica, replicaclient and monitors struct to standard packages in order to use that code when using litestream as an API, instead of a binary.
 
-Only moving of code was performed, avoiding modification of code as much as possible.
+Previously, critical components for configuration and setup were internal to the `main` package, making it difficult to embed Litestream directly into other Go applications. This fork extracts the core logic for parsing configuration, validating settings, and initializing `DB`, `Replica`, and `ReplicaClient` objects into a dedicated `setup` package.
+
+The primary changes involved moving code into new packages with minimal modification to the underlying logic, ensuring stability while providing a clearer public API for developers who wish to use Litestream as a library.
 
 ---
 
